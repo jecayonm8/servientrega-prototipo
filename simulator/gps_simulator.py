@@ -70,7 +70,8 @@ def main() -> None:
             "lat": lat,
             "lng": lng,
             "velocidad_kmh": velocidad,
-            "timestamp": int(time.time())
+            "timestamp": int(time.time()),
+            "entregado": paso == PASOS_TOTAL,
         }
 
         client.publish(MQTT_TOPIC, json.dumps(payload))

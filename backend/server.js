@@ -8,6 +8,8 @@ const cors = require('cors');
 require('dotenv').config();
 
 const enviosRoutes = require('./routes/envios');
+const tmsRoutes    = require('./routes/tms');
+const wmsRoutes    = require('./routes/wms');
 require('./mqtt-subscriber'); // Inicia el subscriber MQTT
 
 const app = express();
@@ -29,13 +31,23 @@ app.get('/', (req, res) => {
       ubicacion_actual:  'GET  /envios/:codigo/ubicacion',
       historial:         'GET  /envios/:codigo/historial',
       notificaciones:    'GET  /envios/:codigo/notificaciones',
-      crear_envio:       'POST /envios'
+      crear_envio:       'POST /envios',
+      tms_rutas:         'GET  /tms/rutas',
+      tms_ruta_envio:    'GET  /tms/rutas/:envio_codigo',
+      tms_crear_ruta:    'POST /tms/rutas',
+      tms_vehiculos:     'GET  /tms/vehiculos',
+      wms_bodegas:       'GET  /wms/bodegas',
+      wms_bodega:        'GET  /wms/bodegas/:id',
+      wms_ingresar:      'POST /wms/bodegas/:id/ingresar',
+      wms_despachar:     'POST /wms/bodegas/:id/despachar'
     }
   });
 });
 
-// ─── Rutas de envíos ──────────────────────────────────────
+// ─── Rutas ────────────────────────────────────────────────
 app.use('/envios', enviosRoutes);
+app.use('/tms',    tmsRoutes);
+app.use('/wms',    wmsRoutes);
 
 // ─── Manejo de errores ────────────────────────────────────
 app.use((err, req, res, next) => {

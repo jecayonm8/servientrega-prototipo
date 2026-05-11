@@ -1,0 +1,209 @@
+{
+  "info": {
+    "name": "Servientrega — Prototipo Adm. Infraestructura TI",
+    "description": "Colección completa de endpoints del prototipo GPS Track & Trace.\nUniversidad del Quindío · Grupo 01D · Período 2026-1\n\nCaso de uso demo: Envío SRV-12345 de Armenia a Pereira.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "envio_demo",
+      "value": "SRV-12345",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "General",
+      "item": [
+        {
+          "name": "Info de la API",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/",
+            "description": "Retorna información general de la API y lista de endpoints disponibles."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Track & Trace — Envíos",
+      "item": [
+        {
+          "name": "Listar todos los envíos",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/envios",
+            "description": "Lista todos los envíos registrados ordenados por fecha de creación."
+          }
+        },
+        {
+          "name": "Detalle de envío",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/envios/{{envio_demo}}",
+            "description": "Retorna el detalle completo del envío SRV-12345 (demo: Armenia → Pereira)."
+          }
+        },
+        {
+          "name": "Última ubicación GPS",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/envios/{{envio_demo}}/ubicacion",
+            "description": "Retorna las coordenadas GPS más recientes del envío. Se actualiza en tiempo real desde el simulador."
+          }
+        },
+        {
+          "name": "Historial de recorrido",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/envios/{{envio_demo}}/historial",
+            "description": "Lista todas las coordenadas GPS registradas del envío en orden cronológico (ruta completa)."
+          }
+        },
+        {
+          "name": "Notificaciones del envío",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/envios/{{envio_demo}}/notificaciones",
+            "description": "Lista las notificaciones generadas para el envío (salida de bodega, entrega, etc.)."
+          }
+        },
+        {
+          "name": "Crear nuevo envío",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/envios",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"SRV-99999\",\n  \"origen\": \"Armenia\",\n  \"destino\": \"Bogotá\",\n  \"cliente\": \"Empresa Ejemplo S.A.S\"\n}"
+            },
+            "description": "Registra un nuevo envío en el sistema. El estado inicial es EN_BODEGA."
+          }
+        }
+      ]
+    },
+    {
+      "name": "TMS — Transportation Management",
+      "item": [
+        {
+          "name": "Listar todas las rutas",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/tms/rutas",
+            "description": "Lista todas las rutas de transporte asignadas con información del envío y vehículo."
+          }
+        },
+        {
+          "name": "Ruta de un envío",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/tms/rutas/{{envio_demo}}",
+            "description": "Retorna la ruta asignada al envío SRV-12345: vehículo, distancia y tiempo estimado."
+          }
+        },
+        {
+          "name": "Vehículos en tránsito",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/tms/vehiculos",
+            "description": "Lista todos los vehículos con envíos EN_TRANSITO y su última posición GPS."
+          }
+        },
+        {
+          "name": "Crear ruta",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/tms/rutas",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"envio_codigo\": \"SRV-12345\",\n  \"vehiculo\": \"TRK-001\",\n  \"distancia_km\": 48.5,\n  \"tiempo_estimado_min\": 55\n}"
+            },
+            "description": "Asigna un vehículo y define la ruta para el envío SRV-12345 (Armenia → Pereira, ~48 km)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "WMS — Warehouse Management",
+      "item": [
+        {
+          "name": "Listar bodegas",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/wms/bodegas",
+            "description": "Lista las bodegas del sistema con el conteo de envíos actualmente almacenados."
+          }
+        },
+        {
+          "name": "Detalle bodega Armenia (id=1)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/wms/bodegas/1",
+            "description": "Retorna el detalle de la Bodega Central Armenia y los envíos en estado EN_BODEGA."
+          }
+        },
+        {
+          "name": "Detalle bodega Pereira (id=2)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/wms/bodegas/2",
+            "description": "Retorna el detalle de la Bodega Pereira y los envíos almacenados."
+          }
+        },
+        {
+          "name": "Ingresar envío a bodega",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/wms/bodegas/1/ingresar",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"envio_codigo\": \"SRV-12345\"\n}"
+            },
+            "description": "Registra el ingreso del envío a la Bodega Central Armenia. Cambia estado a EN_BODEGA."
+          }
+        },
+        {
+          "name": "Despachar envío de bodega",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/wms/bodegas/1/despachar",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"envio_codigo\": \"SRV-12345\"\n}"
+            },
+            "description": "Despacha el envío SRV-12345 desde la Bodega Armenia. Cambia estado a DESPACHADO y genera notificación."
+          }
+        }
+      ]
+    }
+  ]
+}

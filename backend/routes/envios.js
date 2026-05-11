@@ -4,7 +4,8 @@
 
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const db     = require('../db');
+const redis  = require('../redis-client');
 
 // ─── GET /envios — Listar todos ───────────────────────────
 router.get('/', async (req, res) => {
@@ -37,6 +38,13 @@ router.get('/:codigo', async (req, res) => {
 // ─── GET /envios/:codigo/ubicacion — Última ubicación ─────
 router.get('/:codigo/ubicacion', async (req, res) => {
   try {
+    // Intentar desde caché Redis primero
+    const cached = await redis.get(`gps:${req.params.codigo}`);
+    if (cached) {
+      return res.json({ ...JSON.parse(cached), fuente: 'cache' });
+    }
+
+    // Fallback a PostgreSQL
     const result = await db.query(
       `SELECT t.lat, t.lng, t.velocidad_kmh, t.vehiculo, t.timestamp
        FROM tracking t
@@ -49,7 +57,7 @@ router.get('/:codigo/ubicacion', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Sin tracking disponible' });
     }
-    res.json(result.rows[0]);
+    res.json({ ...result.rows[0], fuente: 'db' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
