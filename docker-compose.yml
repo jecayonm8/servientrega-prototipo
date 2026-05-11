@@ -1,0 +1,54 @@
+version: '3.8'
+
+# ════════════════════════════════════════════════════════════
+# Servientrega — Prototipo Adm. Infraestructura TI
+# Levanta los 3 servicios base del prototipo
+# Universidad del Quindío · Grupo 01D · Período 2026-1
+# ════════════════════════════════════════════════════════════
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: servi_postgres
+    environment:
+      POSTGRES_USER: servi_admin
+      POSTGRES_PASSWORD: servi_pass_2026
+      POSTGRES_DB: servientrega_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U servi_admin -d servientrega_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: servi_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: servi_mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  mosquitto_data:
+  mosquitto_log:
