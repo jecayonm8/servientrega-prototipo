@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#009A44" />
+    <meta name="description" content="Seguimiento en tiempo real de envíos Servientrega" />
+    <link rel="manifest" href="/manifest.json" />
+    <!-- Paleta Servientrega para Tailwind CDN -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              servi: {
+                green:   '#009A44',
+                light:   '#56C271',
+                dark:    '#046A38',
+                magenta: '#DF1995',
+                gray:    '#97999B',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet via CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <title>Servientrega — Tracking</title>
+  </head>
+  <body class="bg-gray-100">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
