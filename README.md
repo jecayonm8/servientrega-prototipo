@@ -134,7 +134,7 @@ docker compose down -v
 |---|---|
 | Samuel Castaño | Backend + BD (carpetas `backend/` y `db/`) |
 | Neyder Ruiz | Simulador GPS + Packet Tracer SD-WAN (carpeta `simulator/`) |
-| Juan Esteban Cayón | App móvil Flutter + Notificaciones FCM |
+| Juan Esteban Cayón | PWA (React + Vite + Leaflet + Tailwind) |
 | Juan Manuel Flor | TMS/WMS + Integración API + Documentación |
 
 ---
@@ -145,6 +145,6 @@ docker compose down -v
   por restricciones de tiempo. Los datos llegan al backend de forma idéntica.
 - El simulador publica una coordenada cada 5 segundos (configurable en
   `gps_simulator.py`).
-- Para que la app móvil se conecte, debe apuntar a la IP local del PC
-  donde corre el backend (no `localhost`).
+- Para que la PWA se conecte al backend, debe apuntar a la IP local del PC
+  donde corre el backend (no `localhost`). En producción usará la URL pública.
 - La red SD-WAN se simula aparte en **Cisco Packet Tracer** para la demo.

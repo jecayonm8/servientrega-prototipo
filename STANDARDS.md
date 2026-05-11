@@ -20,8 +20,11 @@ Estas son las herramientas y versiones acordadas. **No introducir alternativas s
 | Caché | Redis | 7 |
 | Mensajería IoT | Mosquitto MQTT | 2.0 |
 | Simulador GPS | Python | 3.10+ |
-| App móvil | Flutter | 3.x |
-| Notificaciones | Firebase Cloud Messaging | última |
+| Frontend PWA | React + Vite | Vite 5+ |
+| Mapa | Leaflet + OpenStreetMap | Leaflet 1.9+ |
+| Estilos | Tailwind CSS via CDN | v3 |
+| PWA | manifest.json + service-worker.js | — |
+| Hosting demo | Netlify drop | — |
 | Red simulada | Cisco Packet Tracer | 8.2+ |
 | Contenedores | Docker + Docker Compose | Docker Desktop |
 | Repo | GitHub | — |
@@ -39,7 +42,7 @@ servientrega-prototipo/
 ├── mosquitto/              ← NO modificar
 ├── simulator/              ← Solo Neyder
 ├── backend/                ← Solo Samuel y Juan Manuel
-└── mobile/                 ← Solo Juan Esteban (lo crea él)
+└── frontend/               ← Solo Juan Esteban (PWA)
 ```
 
 ---
@@ -230,8 +233,8 @@ Patrón: `servientrega/<dominio>/<accion>`
 | Topic | Quién publica | Quién consume |
 |---|---|---|
 | `servientrega/flota/gps` | Simulador (Neyder) | Backend (Samuel) |
-| `servientrega/envios/eventos` | Backend | App móvil |
-| `servientrega/notificaciones` | Backend | FCM bridge |
+| `servientrega/envios/eventos` | Backend | PWA (frontend) |
+| `servientrega/notificaciones` | Backend | PWA (service-worker) |
 
 ### 7.2 Payload
 
@@ -375,7 +378,7 @@ Si tienes una duda sobre algún área, contacta al responsable directamente:
 |---|---|
 | Backend Node.js + BD | Samuel Castaño |
 | Simulador GPS + Red SD-WAN | Neyder Ruiz |
-| App móvil Flutter + Notificaciones | Juan Esteban Cayón |
+| PWA Frontend + Notificaciones push | Juan Esteban Cayón |
 | TMS/WMS + Documentación + Postman | Juan Manuel Flor |
 
 ---
