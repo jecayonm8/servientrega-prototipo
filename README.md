@@ -139,6 +139,44 @@ docker compose down -v
 
 ---
 
+## ⚠️ Solución de problemas conocidos
+
+### Windows: el backend no conecta a PostgreSQL (`password authentication failed`)
+
+**Síntoma:** El backend arranca pero `/envios` devuelve un error de autenticación, aunque los contenedores Docker estén corriendo y sanos.
+
+**Causa:** Windows tiene un **PostgreSQL local instalado** (servicio `postgresql-x64-*`) que escucha en `localhost:5432` con prioridad sobre el contenedor Docker. El backend llega al postgres local, que no tiene el usuario `servi_admin`, y falla.
+
+**Diagnóstico rápido** — ejecuta en PowerShell:
+```powershell
+netstat -ano | Select-String ":5432"
+```
+Si ves **dos procesos** distintos escuchando en 5432, tienes el conflicto.
+
+**Solución:**
+
+1. Obtén la IP del subsistema WSL2 (donde viven los contenedores Docker):
+```powershell
+wsl hostname -I
+```
+Copia el primer valor, por ejemplo `172.31.233.211`.
+
+2. Edita `backend/.env` y reemplaza:
+```
+DB_HOST=localhost
+```
+por:
+```
+DB_HOST=<la IP que copiaste>
+```
+
+3. Reinicia el backend (`npm start`). El mensaje `✅ PostgreSQL conectado` debe aparecer.
+
+> **Importante:** esta IP puede cambiar si reinicias Docker Desktop o WSL2.
+> Si el problema vuelve, repite el paso 1 y actualiza el `.env`.
+
+---
+
 ## 📝 Notas importantes
 
 - **El dispositivo GPS físico fue reemplazado por un simulador en software**
