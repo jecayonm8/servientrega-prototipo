@@ -43,18 +43,24 @@ export default function EnvioDetail({ codigo, onBack }) {
       .catch(() => setNotifs([]))
   }, [codigo])
 
-  // ── Polling de ubicación cada 5 segundos ─────────────────
+  // ── Polling cada 5s: refresca ubicación Y estado del envío ──
+  // Necesario para que el marcador se mueva en el mapa (ubicacion)
+  // y el badge de estado cambie sin recargar (envio.estado).
   useEffect(() => {
     if (!codigo) return
 
-    const fetchUbicacion = () => {
+    const poll = () => {
       getUbicacion(codigo)
         .then(setUbicacion)
         .catch(() => setUbicacion(null))
+
+      getEnvio(codigo)
+        .then(setEnvio)
+        .catch(() => {})
     }
 
-    fetchUbicacion()
-    intervalRef.current = setInterval(fetchUbicacion, 5000)
+    poll()
+    intervalRef.current = setInterval(poll, 5000)
 
     // Cleanup al desmontar
     return () => {
@@ -145,7 +151,7 @@ export default function EnvioDetail({ codigo, onBack }) {
         <section className="bg-white rounded-lg shadow overflow-hidden">
           {ubicacion ? (
             <>
-              <MapView selected={codigo} />
+              <MapView selected={codigo} ubicacion={ubicacion} />
               <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid #f0f0f0' }}>
                 <div className="flex flex-wrap gap-4" style={{ fontSize: '0.8rem', color: '#97999B' }}>
                   <span>

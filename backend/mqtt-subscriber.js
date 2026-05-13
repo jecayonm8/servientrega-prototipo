@@ -50,8 +50,8 @@ client.on('message', async (topic, message) => {
       [envio.id, data.lat, data.lng, data.velocidad_kmh, data.vehiculo]
     );
 
-    // ── Cambio de estado EN_BODEGA → EN_TRANSITO ──────────
-    if (envio.estado === 'EN_BODEGA') {
+    // ── Cambio de estado EN_BODEGA o DESPACHADO → EN_TRANSITO ─
+    if (['EN_BODEGA', 'DESPACHADO'].includes(envio.estado)) {
       await db.query(
         `UPDATE envios SET estado = 'EN_TRANSITO', updated_at = CURRENT_TIMESTAMP
          WHERE id = $1`,

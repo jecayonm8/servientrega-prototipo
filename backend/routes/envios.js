@@ -154,8 +154,8 @@ router.put('/:codigo/ubicacion', async (req, res) => {
       [envio.id, lat, lng, velocidad_kmh || null, vehiculo || null]
     );
 
-    // Si estaba EN_BODEGA, pasar a EN_TRANSITO automáticamente
-    if (envio.estado === 'EN_BODEGA') {
+    // Si estaba EN_BODEGA o DESPACHADO, pasar a EN_TRANSITO automáticamente
+    if (['EN_BODEGA', 'DESPACHADO'].includes(envio.estado)) {
       await db.query(
         `UPDATE envios SET estado = 'EN_TRANSITO', updated_at = CURRENT_TIMESTAMP
          WHERE id = $1`,
