@@ -54,7 +54,7 @@
           "request": {
             "method": "GET",
             "url": "{{base_url}}/envios/{{envio_demo}}/ubicacion",
-            "description": "Retorna las coordenadas GPS más recientes del envío. Se actualiza en tiempo real desde el simulador."
+            "description": "Retorna las coordenadas GPS más recientes del envío. Primero consulta Redis (caché), luego PostgreSQL."
           }
         },
         {
@@ -70,7 +70,7 @@
           "request": {
             "method": "GET",
             "url": "{{base_url}}/envios/{{envio_demo}}/notificaciones",
-            "description": "Lista las notificaciones generadas para el envío (salida de bodega, entrega, etc.)."
+            "description": "Lista las notificaciones generadas para el envío (ingreso bodega, despacho, entrega, etc.)."
           }
         },
         {
@@ -79,16 +79,43 @@
             "method": "POST",
             "url": "{{base_url}}/envios",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"codigo\": \"SRV-99999\",\n  \"origen\": \"Armenia\",\n  \"destino\": \"Bogotá\",\n  \"cliente\": \"Empresa Ejemplo S.A.S\"\n}"
             },
             "description": "Registra un nuevo envío en el sistema. El estado inicial es EN_BODEGA."
+          }
+        },
+        {
+          "name": "Cambiar estado del envío",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/envios/{{envio_demo}}/estado",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"ENTREGADO\"\n}"
+            },
+            "description": "Actualiza el estado del envío. Estados válidos: EN_BODEGA, CLASIFICADO, DESPACHADO, EN_TRANSITO, ENTREGADO, DEVUELTO, CANCELADO."
+          }
+        },
+        {
+          "name": "Registrar ubicación GPS (manual)",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/envios/{{envio_demo}}/ubicacion",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lat\": 4.5339,\n  \"lng\": -75.6811,\n  \"velocidad_kmh\": 65,\n  \"vehiculo\": \"TRK-001\"\n}"
+            },
+            "description": "Inserta un punto de tracking manual. Si el envío estaba EN_BODEGA, lo cambia automáticamente a EN_TRANSITO. Actualiza el caché Redis."
           }
         }
       ]
@@ -126,10 +153,7 @@
             "method": "POST",
             "url": "{{base_url}}/tms/rutas",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
@@ -168,15 +192,12 @@
           }
         },
         {
-          "name": "Ingresar envío a bodega",
+          "name": "Ingresar envío a bodega (legacy)",
           "request": {
             "method": "POST",
             "url": "{{base_url}}/wms/bodegas/1/ingresar",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
@@ -186,21 +207,205 @@
           }
         },
         {
-          "name": "Despachar envío de bodega",
+          "name": "Despachar envío de bodega (legacy)",
           "request": {
             "method": "POST",
             "url": "{{base_url}}/wms/bodegas/1/despachar",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"envio_codigo\": \"SRV-12345\"\n}"
             },
             "description": "Despacha el envío SRV-12345 desde la Bodega Armenia. Cambia estado a DESPACHADO y genera notificación."
+          }
+        },
+        {
+          "name": "Entrada a bodega (flujo nuevo)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/wms/bodega/entrada",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"envio_codigo\": \"SRV-12345\",\n  \"bodega_id\": 1\n}"
+            },
+            "description": "Registra ingreso del paquete a bodega Armenia. Cambia estado a EN_BODEGA. Genera notificación. Si bodega_id se omite, usa la bodega 1 (Armenia)."
+          }
+        },
+        {
+          "name": "Cambiar estado en bodega",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/wms/bodega/{{envio_demo}}/estado",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"CLASIFICADO\"\n}"
+            },
+            "description": "Actualiza el estado interno del paquete en bodega. Genera notificación de cambio de estado."
+          }
+        },
+        {
+          "name": "Salida de bodega (DESPACHADO)",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/wms/bodega/salida",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"envio_codigo\": \"SRV-12345\"\n}"
+            },
+            "description": "Marca el paquete como DESPACHADO listo para salir en camión. Genera notificación de despacho."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Flujo completo — Caso de uso demo",
+      "description": "Los 7 pasos del hilo conductor: Cliente consulta → Bodega → TMS → GPS → App muestra camión → Entregado.\nEjecuta en orden para simular el flujo completo con SRV-12345 (Armenia → Pereira).",
+      "item": [
+        {
+          "name": "PASO 1 — Crear envío SRV-12345",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/envios",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"SRV-12345\",\n  \"origen\": \"Armenia\",\n  \"destino\": \"Pereira\",\n  \"cliente\": \"Juan Esteban García\"\n}"
+            },
+            "description": "PASO 1: Cliente registra el envío en el sistema. Estado inicial: EN_BODEGA.\n(Si ya existe, puedes saltar este paso o usar otro código.)"
+          }
+        },
+        {
+          "name": "PASO 2 — Ingresar paquete a bodega Armenia",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/wms/bodega/entrada",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"envio_codigo\": \"SRV-12345\",\n  \"bodega_id\": 1\n}"
+            },
+            "description": "PASO 2: El operador de bodega escanea el paquete al recibirlo en Armenia. La app muestra: 'Tu paquete está en bodega Armenia'. Estado → EN_BODEGA."
+          }
+        },
+        {
+          "name": "PASO 3 — Clasificar paquete en bodega",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/wms/bodega/{{envio_demo}}/estado",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"CLASIFICADO\"\n}"
+            },
+            "description": "PASO 3: Bodega clasifica el paquete según la ruta. Estado → CLASIFICADO."
+          }
+        },
+        {
+          "name": "PASO 4 — Juan Manuel crea ruta en TMS",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/tms/rutas",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"envio_codigo\": \"SRV-12345\",\n  \"vehiculo\": \"TRK-001\",\n  \"distancia_km\": 48.5,\n  \"tiempo_estimado_min\": 55\n}"
+            },
+            "description": "PASO 4: Juan Manuel crea la ruta Armenia → Pereira en el TMS. Asigna el camión TRK-001 (~48 km, ~55 min)."
+          }
+        },
+        {
+          "name": "PASO 5 — WMS despacha el paquete",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/wms/bodega/salida",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"envio_codigo\": \"SRV-12345\"\n}"
+            },
+            "description": "PASO 5: WMS marca el paquete como listo para cargar en el camión. Estado → DESPACHADO."
+          }
+        },
+        {
+          "name": "PASO 6 — Neyder activa simulador GPS (primera coordenada)",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/envios/{{envio_demo}}/ubicacion",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lat\": 4.5339,\n  \"lng\": -75.6811,\n  \"velocidad_kmh\": 0,\n  \"vehiculo\": \"TRK-001\"\n}"
+            },
+            "description": "PASO 6: El simulador GPS publica las primeras coordenadas (salida de bodega Armenia). El backend las guarda en PostgreSQL y Redis, y cambia estado → EN_TRANSITO automáticamente. La app de Juan Esteban verá el camión en el mapa."
+          }
+        },
+        {
+          "name": "PASO 6b — GPS en ruta (coordenada intermedia)",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/envios/{{envio_demo}}/ubicacion",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lat\": 4.6097,\n  \"lng\": -75.6625,\n  \"velocidad_kmh\": 72,\n  \"vehiculo\": \"TRK-001\"\n}"
+            },
+            "description": "PASO 6b (opcional): Segunda coordenada GPS — camión avanzando por la vía Armenia–Pereira."
+          }
+        },
+        {
+          "name": "PASO 7 — Marcar envío como ENTREGADO",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/envios/{{envio_demo}}/estado",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"ENTREGADO\"\n}"
+            },
+            "description": "PASO 7: Al llegar a Pereira, el conductor confirma la entrega. Estado → ENTREGADO. El cliente recibe notificación push. La app muestra badge verde oscuro ✅ ENTREGADO."
+          }
+        },
+        {
+          "name": "VERIFICACIÓN — Consultar estado final",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/envios/{{envio_demo}}",
+            "description": "Verificación final: consulta el envío para confirmar estado ENTREGADO y todos los campos actualizados."
+          }
+        },
+        {
+          "name": "VERIFICACIÓN — Ver notificaciones generadas",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/envios/{{envio_demo}}/notificaciones",
+            "description": "Lista todas las notificaciones generadas durante el flujo: ingreso bodega, despacho, cambios de estado."
           }
         }
       ]

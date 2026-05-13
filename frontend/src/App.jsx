@@ -1,25 +1,66 @@
 import { useState, useEffect } from 'react'
 import MapView from './components/MapView'
 import EnvioCard from './components/EnvioCard'
+import EnvioDetail from './components/EnvioDetail'
 import { getEnvios } from './services/api'
 
-export default function App() {
-  const [envios, setEnvios]   = useState([])
-  const [selected, setSelected] = useState(null)
-  const [error, setError]     = useState(null)
-  const [loading, setLoading] = useState(true)
+// ─── Hash-router simple (sin dependencias externas) ───────
+// Rutas soportadas:
+//   #/           → Lista de envíos (home)
+//   #/envio/SRV-12345  → Detalle del envío
 
+function parseHash() {
+  const hash = window.location.hash.replace('#', '') || '/'
+  const match = hash.match(/^\/envio\/(.+)$/)
+  if (match) return { view: 'detail', codigo: match[1] }
+  return { view: 'home' }
+}
+
+export default function App() {
+  const [route, setRoute]         = useState(parseHash)
+  const [envios, setEnvios]       = useState([])
+  const [selected, setSelected]   = useState(null)
+  const [error, setError]         = useState(null)
+  const [loading, setLoading]     = useState(true)
+
+  // ── Escuchar cambios de hash (botón atrás del navegador) ─
+  useEffect(() => {
+    const onHashChange = () => setRoute(parseHash())
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  // ── Cargar lista de envíos ────────────────────────────────
   useEffect(() => {
     getEnvios()
       .then((data) => { setEnvios(data); setLoading(false) })
-      .catch(() => { setError('No se pudo conectar al backend. ¿Está corriendo en localhost:3000?'); setLoading(false) })
+      .catch(() => {
+        setError('No se pudo conectar al backend. ¿Está corriendo en localhost:3000?')
+        setLoading(false)
+      })
   }, [])
 
+  // ── Navegar a detalle ─────────────────────────────────────
+  const goToDetail = (codigo) => {
+    window.location.hash = `/envio/${codigo}`
+  }
+
+  // ── Volver a la lista ─────────────────────────────────────
+  const goHome = () => {
+    window.location.hash = '/'
+  }
+
+  // ── Vista detalle ─────────────────────────────────────────
+  if (route.view === 'detail') {
+    return <EnvioDetail codigo={route.codigo} onBack={goHome} />
+  }
+
+  // ── Vista home — Lista de envíos ──────────────────────────
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f8f9fa', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
-      <header 
-        className="text-white shadow-lg" 
-        style={{ 
+      <header
+        className="text-white shadow-lg"
+        style={{
           backgroundColor: '#009A44',
           backgroundImage: 'linear-gradient(135deg, #009A44 0%, #007a35 100%)',
           paddingTop: '2.5rem',
@@ -29,9 +70,9 @@ export default function App() {
         }}
       >
         <div className="max-w-2xl mx-auto text-center">
-          <h1 
-            className="font-bold tracking-tight" 
-            style={{ 
+          <h1
+            className="font-bold tracking-tight"
+            style={{
               fontSize: '2rem',
               letterSpacing: '0.5px',
               marginBottom: '0.5rem',
@@ -40,9 +81,9 @@ export default function App() {
           >
             🚚 Servientrega — Tracking
           </h1>
-          <p 
+          <p
             className="font-medium"
-            style={{ 
+            style={{
               fontSize: '0.95rem',
               color: '#56C271',
               letterSpacing: '0.3px',
@@ -82,6 +123,7 @@ export default function App() {
               envio={envio}
               onSelect={() => setSelected(envio.codigo === selected ? null : envio.codigo)}
               isSelected={selected === envio.codigo}
+              onNavigate={() => goToDetail(envio.codigo)}
             />
           ))}
         </section>
