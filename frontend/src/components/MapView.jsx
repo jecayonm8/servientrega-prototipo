@@ -82,13 +82,47 @@ export default function MapView({ selected, ubicacion }) {
         .addTo(mapRef.current)
         .bindPopup(selected || '')
     }
-    const zoom = mapRef.current.getZoom()
-    mapRef.current.setView([lat, lng], zoom < 12 ? 13 : zoom)
   }, [ubicacion])
 
+  // ── Centrar mapa en la ubicación actual ──────────────────
+  const centrarMapa = () => {
+    if (!mapRef.current || !ubicacion) return
+    const zoom = mapRef.current.getZoom()
+    mapRef.current.setView([ubicacion.lat, ubicacion.lng], zoom < 13 ? 13 : zoom, { animate: true })
+  }
+
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="bg-white rounded-lg shadow overflow-hidden" style={{ position: 'relative' }}>
       <div ref={containerRef} style={{ height: '300px' }} className="w-full" />
+
+      {/* Botón centrar — visible solo cuando hay ubicación */}
+      {ubicacion && (
+        <button
+          onClick={centrarMapa}
+          title="Centrar mapa en el envío"
+          style={{
+            position: 'absolute',
+            top: '0.6rem',
+            right: '0.6rem',
+            zIndex: 1000,
+            backgroundColor: '#009A44',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '0.4rem 0.75rem',
+            fontSize: '0.78rem',
+            fontWeight: '700',
+            cursor: 'pointer',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+          }}
+        >
+          📍 Centrar
+        </button>
+      )}
+
       {!selected && (
         <p className="text-center text-gray-400 text-sm p-2">
           Selecciona un envío para ver su ubicación en el mapa
